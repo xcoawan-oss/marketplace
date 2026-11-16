@@ -25,6 +25,13 @@ button{cursor:pointer}
 .primary{padding:11px;background:#087b55;color:white;border:0;border-radius:7px}
 .danger{padding:8px 10px;background:#b42318;color:white;border:0;border-radius:7px}
 .card .primary{width:100%}
+.purchase-controls{display:grid;grid-template-columns:90px 1fr;gap:8px;align-items:end;margin-top:12px}
+.buy-qty{width:100%;text-align:center}
+.qty-control{display:flex;align-items:center;gap:6px}
+.qty-control button{border:0;border-radius:6px;background:#e8f3ee;color:#087b55;font-weight:bold;width:30px;height:32px}
+.qty-input{width:58px;padding:7px;text-align:center}
+.cart-detail{display:flex;flex-direction:column;gap:5px;flex:1}
+.cart-subtotal{font-weight:bold;color:#087b55}
 .panel{margin-top:24px}
 .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 input,select{padding:11px;border:1px solid #ccd2d8;border-radius:7px;width:100%}
@@ -163,27 +170,66 @@ function showProducts(){
       <h3>${escapeHTML(p.name)}</h3>
       <p>${escapeHTML(p.category)}</p>
       <p class="price">${rupiah(p.price)}</p>
-      <button class="primary" onclick="addCart(${Number(p.id)})">Tambah ke Keranjang</button>
+      <div class="purchase-controls">
+        <div><label for="buyQty-${Number(p.id)}">Quantity</label><input class="buy-qty" id="buyQty-${Number(p.id)}" type="number" min="1" step="1" value="1"></div>
+        <button class="primary" onclick="addCart(${Number(p.id)}, document.getElementById('buyQty-${Number(p.id)}').value)">Tambah ke Keranjang</button>
+      </div>
     </div>`).join("") || "Produk tidak ditemukan.";
 }
-function addCart(id){
-  const product=data.find(p=>p.id===id);
-  if(product){cart.push({...product});updateCart();}
+function addCart(id, quantity){
+  const product=data.find(p=>Number(p.id)===Number(id));
+  const qty=Math.max(1, Math.floor(Number(quantity)||1));
+  if(!product) return;
+  const existing=cart.find(p=>Number(p.id)===Number(id));
+  if(existing){existing.quantity+=qty;}
+  else{cart.push({...product,quantity:qty});}
+  updateCart();
 }
 function updateCart(){
-  document.getElementById("count").textContent=cart.length;
+  const totalQty=cart.reduce((sum,p)=>sum+p.quantity,0);
+  const total=cart.reduce((sum,p)=>sum+(p.price*p.quantity),0);
+  document.getElementById("count").textContent=totalQty;
   document.getElementById("cartItems").innerHTML=cart.length?
-    cart.map((p,i)=>`<div class="cart-row"><span>${escapeHTML(p.name)} — ${rupiah(p.price)}</span><button class="danger" onclick="removeCart(${i})">Hapus</button></div>`).join("") :
+    cart.map((p,i)=>`<div class="cart-row">
+      <div class="cart-detail">
+        <strong>${escapeHTML(p.name)}</strong>
+        <small>${rupiah(p.price)} / item</small>
+        <div class="qty-control">
+          <button type="button" aria-label="Kurangi quantity" onclick="changeCartQty(${i},-1)">−</button>
+          <input class="qty-input" type="number" min="1" step="1" value="${p.quantity}" aria-label="Quantity ${escapeHTML(p.name)}" onchange="setCartQty(${i},this.value)">
+          <button type="button" aria-label="Tambah quantity" onclick="changeCartQty(${i},1)">+</button>
+        </div>
+        <span class="cart-subtotal">Subtotal: ${rupiah(p.price*p.quantity)}</span>
+      </div>
+      <button class="danger" onclick="removeCart(${i})">Hapus</button>
+    </div>`).join("") :
     "Belum ada produk.";
-  document.getElementById("total").textContent="Total: "+rupiah(cart.reduce((s,p)=>s+p.price,0));
+  document.getElementById("total").textContent="Total: "+rupiah(total);
+}
+function changeCartQty(i,delta){
+  if(!cart[i])return;
+  cart[i].quantity=Math.max(1,cart[i].quantity+delta);
+  updateCart();
+}
+function setCartQty(i,value){
+  if(!cart[i])return;
+  const qty=Math.floor(Number(value));
+  if(!Number.isFinite(qty)||qty<1){
+    alert("Quantity minimal 1.");
+    updateCart();
+    return;
+  }
+  cart[i].quantity=qty;
+  updateCart();
 }
 function removeCart(i){cart.splice(i,1);updateCart();}
 function clearCart(){cart=[];updateCart();}
 function checkout(){
   if(!cart.length){alert("Keranjang masih kosong");return;}
-  const items=cart.map(p=>p.name+" - "+rupiah(p.price)).join("\n");
-  const total=cart.reduce((s,p)=>s+p.price,0);
-  const message=`Halo, saya ingin memesan:\n${items}\nTotal: ${rupiah(total)}`;
+  const items=cart.map(p=>`${p.name} | ${p.quantity} x ${rupiah(p.price)} = ${rupiah(p.price*p.quantity)}`).join("\n");
+  const total=cart.reduce((s,p)=>s+(p.price*p.quantity),0);
+  const totalQty=cart.reduce((s,p)=>s+p.quantity,0);
+  const message=`Halo, saya ingin memesan:\n${items}\nTotal quantity: ${totalQty}\nTotal: ${rupiah(total)}`;
   window.open("https://wa.me/"+whatsapp+"?text="+encodeURIComponent(message),"_blank");
 }
 function printReceipt(){
@@ -191,16 +237,18 @@ function printReceipt(){
   const now=new Date();
   const dateText=now.toLocaleDateString("id-ID",{day:"2-digit",month:"long",year:"numeric"});
   const timeText=now.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
-  const total=cart.reduce((s,p)=>s+p.price,0);
-  const rows=cart.map((p,i)=>`<tr><td>${i+1}. ${escapeHTML(p.name)}</td><td class="right">${rupiah(p.price)}</td></tr>`).join("");
+  const total=cart.reduce((s,p)=>s+(p.price*p.quantity),0);
+  const totalQty=cart.reduce((s,p)=>s+p.quantity,0);
+  const rows=cart.map((p,i)=>`<tr><td colspan="4">${i+1}. ${escapeHTML(p.name)}</td></tr><tr><td>${p.quantity}</td><td>${rupiah(p.price)}</td><td class="right" colspan="2">${rupiah(p.price*p.quantity)}</td></tr>`).join("");
   const receipt=document.getElementById("receipt");
   receipt.innerHTML=`
     <h2>MY MARKETPLACE</h2>
     <p>STRUK PEMBELIAN</p>
     <p>Tanggal: ${dateText}<br>Waktu cetak: ${timeText}</p>
     <hr>
-    <table><tbody>${rows}</tbody></table>
+    <table><thead><tr><th>Qty</th><th>Harga</th><th class="right" colspan="2">Subtotal</th></tr></thead><tbody>${rows}</tbody></table>
     <hr>
+    <p>Total quantity: ${totalQty}</p>
     <table><tr><th>TOTAL</th><th class="right">${rupiah(total)}</th></tr></table>
     <p>Terima kasih atas pembelian Anda.</p>`;
   window.print();
