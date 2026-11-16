@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Marketplace - Kasir</title>
+<title>My Marketplace - Dashboard, Kasir & Analisa Penjualan</title>
 <style>
 *{box-sizing:border-box}
 :root{--green:#087b55;--green-dark:#056343;--pale:#d8f5e8;--bg:#f5f6fa;--ink:#222;--muted:#667085;--line:#e6e9ed}
@@ -21,6 +21,7 @@ header h2{margin:0}.search{padding:12px;border:0;border-radius:8px;width:min(350
 input,select{padding:11px;border:1px solid #ccd2d8;border-radius:7px;width:100%;background:#fff}label{display:block;font-size:13px;font-weight:bold;margin-bottom:5px}
 .cart-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}.cart-detail{display:flex;flex-direction:column;gap:5px;flex:1;min-width:0}.qty-control{display:flex;align-items:center;gap:6px}.qty-control button{border:0;border-radius:6px;background:#e8f3ee;color:var(--green);font-weight:bold;width:30px;height:32px}.qty-input{width:64px;padding:7px;text-align:center}.cart-subtotal{font-weight:bold;color:var(--green)}.cart-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .dashboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:16px 0}.dashboard-card{background:#fff;border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;padding:15px}.dashboard-label{font-size:12px;color:var(--muted);margin-bottom:7px}.dashboard-value{font-size:23px;font-weight:bold;color:var(--green);overflow-wrap:anywhere}
+.dashboard-menu{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:18px 0 8px}.dashboard-menu a{display:flex;align-items:center;gap:12px;padding:16px;background:#fff;border:1px solid var(--line);border-radius:10px;color:var(--ink);text-decoration:none;font-weight:bold;transition:transform .15s,border-color .15s,box-shadow .15s}.dashboard-menu a:hover{border-color:var(--green);box-shadow:0 3px 10px #ddd;transform:translateY(-1px)}.dashboard-menu .menu-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;background:var(--pale);font-size:22px}.dashboard-menu small{display:block;margin-top:4px;color:var(--muted);font-size:12px;font-weight:normal}
 .note{font-size:12px;color:var(--muted);line-height:1.5}.hidden{display:none!important}.two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}.subpanel{border:1px solid var(--line);border-radius:10px;padding:14px}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:600px}th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}th{background:#f7f9fa;color:#475467}.right{text-align:right}.tag{display:inline-block;padding:4px 8px;border-radius:20px;background:#e8f3ee;color:var(--green);font-size:12px}.empty{color:var(--muted);padding:12px 0}footer{text-align:center;padding:24px;background:var(--green);color:#fff;margin-top:35px}
 #receipt{display:none}
 @media(max-width:600px){header{padding:14px}.hero{margin:12px;padding:22px}.container{padding:10px}.cart-row{align-items:flex-start}.dashboard-value{font-size:20px}}
@@ -44,9 +45,18 @@ input,select{padding:11px;border:1px solid #ccd2d8;border-radius:7px;width:100%;
       <div class="dashboard-card"><div class="dashboard-label">Nilai belanja saat ini</div><div class="dashboard-value" id="dashboardValue">Rp0</div></div>
     </div>
     <p class="note">Ringkasan katalog dan keranjang aktif. Penjualan yang sudah dibayar tercatat terpisah pada bagian Laporan.</p>
+    <h3>Menu Dashboard</h3>
+    <nav class="dashboard-menu" aria-label="Menu Dashboard">
+      <a href="#kasirSection" data-view="kasir"><span class="menu-icon" aria-hidden="true">🛒</span><span>Kasir<small>Transaksi pembelian, pembayaran, dan cetak struk</small></span></a>
+      <a href="#adminSection" data-view="input"><span class="menu-icon" aria-hidden="true">📦</span><span>Input Material<small>Tambah material/barang, atur kategori, harga, dan stok (login admin)</small></span></a>
+      <a href="#reportsSection" data-view="reports"><span class="menu-icon" aria-hidden="true">📊</span><span>Analisa Laporan Penjualan<small>Lihat tren penjualan, produk terlaris, quantity, dan omzet</small></span></a>
+    </nav>
   </section>
 
-  <h2>Kategori Produk</h2><div class="categories" id="categories"></div>
+  <section id="kasirSection" class="hidden" aria-label="Menu Kasir">
+  <div class="cart-actions"><button class="secondary" type="button" onclick="showAppView('dashboard')">← Kembali ke Dashboard</button></div>
+  <h2>Kasir – Transaksi Pembelian</h2>
+  <h3>Kategori Produk</h3><div class="categories" id="categories"></div>
   <h2>Daftar Produk</h2><div class="products" id="products"></div>
 
   <section class="panel" id="cartSection">
@@ -55,6 +65,7 @@ input,select{padding:11px;border:1px solid #ccd2d8;border-radius:7px;width:100%;
     <h3 id="total">Total: Rp0</h3>
     <div class="cart-actions">
       <button class="primary" onclick="checkoutWhatsApp()">Pesan melalui WhatsApp</button>
+      <button class="secondary" onclick="printLastReceipt()">Cetak Struk Terakhir</button>
       <button class="danger" onclick="clearCart()">Kosongkan Keranjang</button>
     </div>
     <p class="note">Atur quantity, harga satuan, dan subtotal pada keranjang. Stok baru berkurang setelah pembayaran diselesaikan.</p>
@@ -69,16 +80,19 @@ input,select{padding:11px;border:1px solid #ccd2d8;border-radius:7px;width:100%;
         </div>
         <p><strong>Total belanja: <span id="paymentTotal">Rp0</span></strong></p>
         <p><strong>Kembalian: <span id="changeDue">Rp0</span></strong></p>
-        <div class="cart-actions"><button class="primary" id="completeSaleBtn" onclick="completeSale()">Selesaikan Pembayaran</button><button class="secondary" onclick="printLastReceipt()">Cetak Struk Terakhir</button></div>
+        <div class="cart-actions"><button class="primary" id="completeSaleBtn" onclick="completeSale()">Selesaikan Pembayaran</button></div>
         <p class="note">Transaksi disimpan ke riwayat dan stok otomatis dikurangi setelah pembayaran cukup dan berhasil disimpan.</p>
       </div>
       <div class="subpanel"><h3>Ringkasan Pembayaran</h3><div id="paymentSummary" class="empty">Belum ada barang yang akan dibayar.</div></div>
     </div>
     <div id="saleNotice" class="note" role="status" aria-live="polite"></div>
   </section>
+  </section>
 
-  <section class="panel" id="reportsSection">
-    <h2>Laporan Penjualan Harian & Bulanan</h2>
+  <section class="panel hidden" id="reportsSection">
+    <div class="cart-actions"><button class="secondary" type="button" onclick="showAppView('dashboard')">← Kembali ke Dashboard</button></div>
+    <h2>Analisa Laporan Penjualan</h2>
+    <p class="note">Analisa berdasarkan transaksi yang sudah diselesaikan. Pilih tanggal atau bulan untuk melihat performa penjualan.</p>
     <div class="two-col">
       <div class="subpanel">
         <label for="reportDate">Pilih tanggal laporan harian</label><input id="reportDate" type="date">
@@ -95,13 +109,23 @@ input,select{padding:11px;border:1px solid #ccd2d8;border-radius:7px;width:100%;
         </div>
       </div>
     </div>
+    <div class="dashboard-grid">
+      <div class="dashboard-card"><div class="dashboard-label">Quantity terjual bulan ini</div><div class="dashboard-value" id="monthlyQty">0</div></div>
+      <div class="dashboard-card"><div class="dashboard-label">Rata-rata transaksi bulanan</div><div class="dashboard-value" id="monthlyAverage">Rp0</div></div>
+      <div class="dashboard-card"><div class="dashboard-label">Jumlah jenis produk terjual</div><div class="dashboard-value" id="monthlyProductTypes">0</div></div>
+    </div>
+    <h3>Analisa Produk Terjual</h3>
+    <div id="salesAnalysis" class="table-wrap"></div>
+    <h3>Ringkasan Analisa</h3>
+    <div id="analysisSummary" class="subpanel" aria-live="polite">Belum ada data penjualan.</div>
     <h3>Riwayat Transaksi Bulan Terpilih</h3>
     <div id="transactionList" class="table-wrap"></div>
     <p class="note">Laporan dihitung dari transaksi yang telah diselesaikan dan tersimpan pada browser/perangkat ini.</p>
   </section>
 
-  <section class="panel" id="adminSection">
-    <h2>Admin & Pengaturan Toko</h2>
+  <section class="panel hidden" id="adminSection">
+    <div class="cart-actions"><button class="secondary" type="button" onclick="showAppView('dashboard')">← Kembali ke Dashboard</button></div>
+    <h2>Input Material & Pengaturan Admin</h2>
     <div id="adminLoginBox" class="subpanel">
       <p>Login untuk mengelola data barang, stok, dan pengaturan toko.</p>
       <form id="loginForm" class="form-grid">
@@ -117,14 +141,15 @@ input,select{padding:11px;border:1px solid #ccd2d8;border-radius:7px;width:100%;
       <div class="cart-actions"><span class="tag">Admin login aktif</span><button class="secondary" onclick="logoutAdmin()">Logout</button></div>
       <div class="two-col">
         <div class="subpanel">
-          <h3>Data Barang</h3>
-          <p class="note">Tambah barang baru atau pilih Edit pada daftar barang. Stok digunakan untuk membatasi jumlah pembelian. Barang dari versi Marketplace sebelumnya yang belum memiliki data stok akan dimulai dari stok 0; isi stok aktual melalui menu Edit sebelum dijual.</p>
+          <h3>Input Material / Data Barang</h3>
+          <p class="note">Isi harga beli (modal per unit) dan harga jual (harga yang dikenakan di kasir). Harga jual digunakan otomatis pada transaksi dan struk. Tambah material/barang baru atau pilih Edit pada daftar barang. Stok digunakan untuk membatasi jumlah pembelian. Barang dari versi Marketplace sebelumnya yang belum memiliki data stok akan dimulai dari stok 0; isi stok aktual melalui menu Edit sebelum dijual.</p>
           <form id="productForm">
             <input type="hidden" id="editProductId">
             <div class="form-grid">
               <div><label for="productName">Nama barang</label><input id="productName" required placeholder="Contoh: Keripik Kentang"></div>
               <div><label for="productCategory">Kategori</label><select id="productCategory" required><option value="">-- Pilih kategori --</option><option>Makanan & Minuman</option><option>Elektronik</option><option>Fashion</option><option>Rumah Tangga</option><option>Kesehatan & Kecantikan</option><option>Otomotif</option><option>Perlengkapan Industri</option><option>Lainnya</option></select></div>
-              <div><label for="productPrice">Harga (Rp)</label><input id="productPrice" type="number" min="1" step="1" required placeholder="15000"></div>
+              <div><label for="productPurchasePrice">Harga Beli (Rp)</label><input id="productPurchasePrice" type="number" min="0" step="1" required placeholder="Contoh: 10000"></div>
+              <div><label for="productSellingPrice">Harga Jual (Rp)</label><input id="productSellingPrice" type="number" min="1" step="1" required placeholder="Contoh: 15000"></div>
               <div><label for="productStock">Quantity / Stok</label><input id="productStock" type="number" min="0" step="1" required placeholder="Contoh: 100"></div>
               <div><label for="productImage">Upload gambar</label><input id="productImage" type="file" accept="image/*"><small class="note">JPG, PNG, WEBP. Opsional.</small><img id="imagePreview" alt="Preview gambar" style="display:none;max-width:130px;max-height:110px;object-fit:contain;margin-top:8px;border-radius:8px"></div>
             </div>
@@ -165,7 +190,7 @@ const monthKey = date => localDateKey(date).slice(0,7);
 const dateTimeText = value => new Date(value).toLocaleString("id-ID",{day:"2-digit",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"});
 
 function readJSON(key, fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback;}catch(e){return fallback;}}
-let data = (readJSON("marketplaceProducts", null) || DEFAULT_PRODUCTS).map(p=>({...p,price:Number(p.price)||0,stock:Number.isFinite(Number(p.stock))?Math.max(0,Number(p.stock)):0}));
+let data = (readJSON("marketplaceProducts", null) || DEFAULT_PRODUCTS).map(p=>{const sellingPrice=Number(p.sellingPrice ?? p.price)||0;return {...p,purchasePrice:Number(p.purchasePrice)||0,sellingPrice,price:sellingPrice,stock:Number.isFinite(Number(p.stock))?Math.max(0,Number(p.stock)):0};});
 let transactions = readJSON("marketplaceTransactions", []); if(!Array.isArray(transactions)) transactions=[];
 let settings = {...{storeName:"MY MARKETPLACE",whatsapp:"6281234567890",username:"admin",password:"admin123"},...readJSON("marketplaceSettings",{})};
 let cart=[]; let category="Semua"; let isAdmin=false; let selectedImageData=""; let lastTransaction=transactions.length?transactions[transactions.length-1]:null;
@@ -233,7 +258,7 @@ function completeSale(){
   const total=totalCart();const cash=Number(document.getElementById("cashReceived").value);
   if(!Number.isFinite(cash)||cash<total){alert("Uang diterima belum mencukupi total belanja.");return;}
   for(const item of cart){const product=data.find(p=>Number(p.id)===Number(item.id));if(!product||product.stock<item.quantity){alert(`Stok ${item.name} berubah atau tidak mencukupi. Periksa kembali keranjang.`);return;}}
-  const now=new Date();const transaction={id:makeTransactionId(now),timestamp:now.toISOString(),dateKey:localDateKey(now),monthKey:monthKey(now),items:cart.map(p=>({id:p.id,name:p.name,price:p.price,quantity:p.quantity,subtotal:p.price*p.quantity})),quantity:totalCartQty(),total,cashReceived:cash,change:cash-total};
+  const now=new Date();const transaction={id:makeTransactionId(now),timestamp:now.toISOString(),dateKey:localDateKey(now),monthKey:monthKey(now),items:cart.map(p=>({id:p.id,name:p.name,purchasePrice:Number(p.purchasePrice)||0,price:p.price,quantity:p.quantity,subtotal:p.price*p.quantity})),quantity:totalCartQty(),total,cashReceived:cash,change:cash-total};
   const oldData=JSON.stringify(data);const oldTransactions=JSON.stringify(transactions);
   cart.forEach(item=>{const product=data.find(p=>Number(p.id)===Number(item.id));product.stock-=item.quantity;});
   transactions.push(transaction);
@@ -257,10 +282,25 @@ function printTransaction(transactionId){
 function renderReports(){
   const selectedDate=document.getElementById("reportDate").value||localDateKey(new Date());const selectedMonth=document.getElementById("reportMonth").value||monthKey(new Date());
   const daily=transactions.filter(t=>t.dateKey===selectedDate);const monthly=transactions.filter(t=>t.monthKey===selectedMonth);
-  document.getElementById("dailyCount").textContent=daily.length;document.getElementById("dailyTotal").textContent=rupiah(daily.reduce((s,t)=>s+t.total,0));
-  document.getElementById("monthlyCount").textContent=monthly.length;document.getElementById("monthlyTotal").textContent=rupiah(monthly.reduce((s,t)=>s+t.total,0));
+  const dailyTotal=daily.reduce((s,t)=>s+(Number(t.total)||0),0);
+  const monthlyTotal=monthly.reduce((s,t)=>s+(Number(t.total)||0),0);
+  const monthlyQty=monthly.reduce((s,t)=>s+(Number(t.quantity)||0),0);
+  document.getElementById("dailyCount").textContent=daily.length;document.getElementById("dailyTotal").textContent=rupiah(dailyTotal);
+  document.getElementById("monthlyCount").textContent=monthly.length;document.getElementById("monthlyTotal").textContent=rupiah(monthlyTotal);
+  document.getElementById("monthlyQty").textContent=monthlyQty.toLocaleString("id-ID");
+  document.getElementById("monthlyAverage").textContent=rupiah(monthly.length?monthlyTotal/monthly.length:0);
+  const productMap=new Map();
+  monthly.forEach(t=>(t.items||[]).forEach(item=>{
+    const key=String(item.name||"Barang");const current=productMap.get(key)||{name:key,quantity:0,revenue:0};
+    current.quantity+=Number(item.quantity)||0;current.revenue+=Number(item.subtotal)||(Number(item.price)||0)*(Number(item.quantity)||0);productMap.set(key,current);
+  }));
+  const productRows=[...productMap.values()].sort((a,b)=>b.quantity-a.quantity||b.revenue-a.revenue);
+  document.getElementById("monthlyProductTypes").textContent=productRows.length;
+  document.getElementById("salesAnalysis").innerHTML=productRows.length?`<table><thead><tr><th>Produk / Material</th><th>Total Quantity</th><th>Omzet</th></tr></thead><tbody>${productRows.map(p=>`<tr><td>${escapeHTML(p.name)}</td><td>${p.quantity.toLocaleString("id-ID")}</td><td>${rupiah(p.revenue)}</td></tr>`).join("")}</tbody></table>`:`<div class="empty">Belum ada produk terjual pada bulan ${escapeHTML(selectedMonth)}.</div>`;
+  const best=productRows[0];
+  document.getElementById("analysisSummary").innerHTML=monthly.length?`Pada bulan <b>${escapeHTML(selectedMonth)}</b> terdapat <b>${monthly.length}</b> transaksi dengan total omzet <b>${rupiah(monthlyTotal)}</b> dan quantity terjual <b>${monthlyQty.toLocaleString("id-ID")}</b>. Rata-rata nilai transaksi adalah <b>${rupiah(monthlyTotal/monthly.length)}</b>. ${best?`Produk dengan quantity penjualan tertinggi adalah <b>${escapeHTML(best.name)}</b>, sebanyak <b>${best.quantity.toLocaleString("id-ID")}</b> unit dengan omzet <b>${rupiah(best.revenue)}</b>.`:"Belum ada rincian produk pada transaksi periode ini."}`:`Belum ada transaksi pada bulan <b>${escapeHTML(selectedMonth)}</b>. Lakukan transaksi melalui menu Kasir untuk mulai membangun analisa penjualan.`;
   const list=[...monthly].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
-  document.getElementById("transactionList").innerHTML=list.length?`<table><thead><tr><th>No. Transaksi</th><th>Tanggal</th><th>Qty</th><th>Total</th><th>Uang diterima</th><th>Kembalian</th><th>Aksi</th></tr></thead><tbody>${list.map(t=>`<tr><td>${escapeHTML(t.id)}</td><td>${dateTimeText(t.timestamp)}</td><td>${t.quantity}</td><td>${rupiah(t.total)}</td><td>${rupiah(t.cashReceived)}</td><td>${rupiah(t.change)}</td><td><button class="small-btn" onclick="printTransaction('${escapeHTML(t.id)}')">Cetak</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty">Belum ada transaksi pada bulan ${escapeHTML(selectedMonth)}.</div>`;
+  document.getElementById("transactionList").innerHTML=list.length?`<table><thead><tr><th>No. Transaksi</th><th>Tanggal</th><th>Qty</th><th>Total</th><th>Uang diterima</th><th>Kembalian</th><th>Aksi</th></tr></thead><tbody>${list.map(t=>`<tr><td>${escapeHTML(t.id)}</td><td>${dateTimeText(t.timestamp)}</td><td>${Number(t.quantity)||0}</td><td>${rupiah(t.total)}</td><td>${rupiah(t.cashReceived)}</td><td>${rupiah(t.change)}</td><td><button class="small-btn" onclick="printTransaction('${escapeHTML(t.id)}')">Cetak</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty">Belum ada transaksi pada bulan ${escapeHTML(selectedMonth)}.</div>`;
 }
 document.getElementById("reportDate").value=localDateKey(new Date());document.getElementById("reportMonth").value=monthKey(new Date());
 document.getElementById("reportDate").addEventListener("change",renderReports);document.getElementById("reportMonth").addEventListener("change",renderReports);
@@ -272,14 +312,23 @@ function fillSettingsForm(){document.getElementById("storeNameInput").value=sett
 document.getElementById("settingsForm").addEventListener("submit",function(e){e.preventDefault();if(!isAdmin)return;const storeName=document.getElementById("storeNameInput").value.trim();const whatsapp=document.getElementById("whatsappInput").value.replace(/\D/g,"");const username=document.getElementById("newAdminUser").value.trim();const newPass=document.getElementById("newAdminPass").value;if(!storeName||!username){alert("Nama toko dan username wajib diisi.");return;}if(whatsapp&&!/^62[0-9]{8,15}$/.test(whatsapp)){alert("Nomor WhatsApp harus menggunakan format 62, contoh 6281234567890.");return;}settings.storeName=storeName;settings.whatsapp=whatsapp;settings.username=username;if(newPass)settings.password=newPass;try{saveSettings();}catch(err){alert("Pengaturan gagal disimpan.");return;}renderStoreIdentity();alert("Pengaturan toko berhasil disimpan.");});
 
 function resetProductForm(){const form=document.getElementById("productForm");form.reset();document.getElementById("editProductId").value="";document.getElementById("saveProductBtn").textContent="Simpan Barang";selectedImageData="";const preview=document.getElementById("imagePreview");preview.src="";preview.style.display="none";}
-function editProduct(id){if(!isAdmin)return;const p=data.find(x=>Number(x.id)===Number(id));if(!p)return;document.getElementById("editProductId").value=p.id;document.getElementById("productName").value=p.name;document.getElementById("productCategory").value=p.category;document.getElementById("productPrice").value=p.price;document.getElementById("productStock").value=p.stock;selectedImageData="";const preview=document.getElementById("imagePreview");if(p.image){preview.src=p.image;preview.style.display="block";}document.getElementById("saveProductBtn").textContent="Simpan Perubahan";document.getElementById("productForm").scrollIntoView({behavior:"smooth",block:"center"});}
-function showManageProducts(){if(!isAdmin)return;document.getElementById("manageProducts").innerHTML=data.length?`<table><thead><tr><th>Nama Barang</th><th>Kategori</th><th>Harga</th><th>Stok</th><th>Aksi</th></tr></thead><tbody>${data.map(p=>`<tr><td>${escapeHTML(p.name)}</td><td>${escapeHTML(p.category)}</td><td>${rupiah(p.price)}</td><td>${p.stock}</td><td><button class="small-btn" onclick="editProduct(${Number(p.id)})">Edit</button> <button class="danger" onclick="deleteProduct(${Number(p.id)})">Hapus</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty">Belum ada barang tersimpan.</div>`;}
+function editProduct(id){if(!isAdmin)return;const p=data.find(x=>Number(x.id)===Number(id));if(!p)return;document.getElementById("editProductId").value=p.id;document.getElementById("productName").value=p.name;document.getElementById("productCategory").value=p.category;document.getElementById("productPurchasePrice").value=Number(p.purchasePrice)||0;document.getElementById("productSellingPrice").value=Number(p.sellingPrice??p.price)||0;document.getElementById("productStock").value=p.stock;selectedImageData="";const preview=document.getElementById("imagePreview");if(p.image){preview.src=p.image;preview.style.display="block";}document.getElementById("saveProductBtn").textContent="Simpan Perubahan";document.getElementById("productForm").scrollIntoView({behavior:"smooth",block:"center"});}
+function showManageProducts(){if(!isAdmin)return;document.getElementById("manageProducts").innerHTML=data.length?`<table><thead><tr><th>Nama Barang</th><th>Kategori</th><th>Harga Beli</th><th>Harga Jual</th><th>Stok</th><th>Aksi</th></tr></thead><tbody>${data.map(p=>`<tr><td>${escapeHTML(p.name)}</td><td>${escapeHTML(p.category)}</td><td>${rupiah(p.purchasePrice)}</td><td>${rupiah(p.sellingPrice??p.price)}</td><td>${p.stock}</td><td><button class="small-btn" onclick="editProduct(${Number(p.id)})">Edit</button> <button class="danger" onclick="deleteProduct(${Number(p.id)})">Hapus</button></td></tr>`).join("")}</tbody></table>`:`<div class="empty">Belum ada barang tersimpan.</div>`;}
 function deleteProduct(id){if(!isAdmin)return;if(cart.some(p=>Number(p.id)===Number(id))){alert("Barang masih ada di keranjang. Hapus dari keranjang sebelum menghapus barang.");return;}if(!confirm("Hapus barang ini dari katalog?"))return;data=data.filter(p=>Number(p.id)!==Number(id));try{saveProducts();}catch(e){alert("Gagal menyimpan perubahan.");return;}showCategories();showProducts();showManageProducts();updateDashboard();}
 const imageInput=document.getElementById("productImage");imageInput.addEventListener("change",function(){const file=this.files&&this.files[0];const preview=document.getElementById("imagePreview");selectedImageData="";if(!file){if(!document.getElementById("editProductId").value){preview.style.display="none";preview.src="";}return;}if(!file.type.startsWith("image/")){alert("File harus berupa gambar.");this.value="";return;}const reader=new FileReader();reader.onload=event=>{const img=new Image();img.onload=()=>{const maxSide=900;const scale=Math.min(1,maxSide/Math.max(img.width,img.height));const canvas=document.createElement("canvas");canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext("2d").drawImage(img,0,0,canvas.width,canvas.height);selectedImageData=canvas.toDataURL("image/jpeg",0.78);preview.src=selectedImageData;preview.style.display="block";};img.onerror=()=>alert("Gambar tidak dapat dibaca.");img.src=event.target.result;};reader.readAsDataURL(file);});
-document.getElementById("productForm").addEventListener("submit",function(e){e.preventDefault();if(!isAdmin)return;const id=document.getElementById("editProductId").value;const name=document.getElementById("productName").value.trim();const cat=document.getElementById("productCategory").value;const price=Number(document.getElementById("productPrice").value);const stock=Number(document.getElementById("productStock").value);if(!name||!cat||!Number.isFinite(price)||price<=0||!Number.isInteger(stock)||stock<0){alert("Isi nama, kategori, harga, dan stok dengan benar.");return;}if(id){const p=data.find(x=>Number(x.id)===Number(id));if(!p)return;if(cart.some(x=>Number(x.id)===Number(id)&&x.quantity>stock)){alert("Stok baru lebih kecil dari quantity barang di keranjang. Kurangi quantity keranjang terlebih dahulu.");return;}p.name=name;p.category=cat;p.price=price;p.stock=stock;if(selectedImageData)p.image=selectedImageData;}else{data.push({id:Date.now(),name,category:cat,price,stock,image:selectedImageData||"https://placehold.co/400x300?text=Produk"});}try{saveProducts();}catch(err){if(id){alert("Perubahan gagal disimpan. Kapasitas penyimpanan mungkin penuh.");}else{data.pop();alert("Barang gagal disimpan. Coba gunakan gambar yang lebih kecil.");}return;}resetProductForm();category="Semua";showCategories();showProducts();showManageProducts();updateCart();alert(id?"Data barang berhasil diperbarui.":"Barang berhasil ditambahkan.");});
+document.getElementById("productForm").addEventListener("submit",function(e){e.preventDefault();if(!isAdmin)return;const id=document.getElementById("editProductId").value;const name=document.getElementById("productName").value.trim();const cat=document.getElementById("productCategory").value;const purchasePrice=Number(document.getElementById("productPurchasePrice").value);const sellingPrice=Number(document.getElementById("productSellingPrice").value);const stock=Number(document.getElementById("productStock").value);if(!name||!cat||!Number.isFinite(purchasePrice)||purchasePrice<0||!Number.isFinite(sellingPrice)||sellingPrice<=0||!Number.isInteger(stock)||stock<0){alert("Isi nama, kategori, harga beli, harga jual, dan stok dengan benar.");return;}if(sellingPrice<purchasePrice&&!confirm("Harga jual lebih rendah daripada harga beli. Barang akan berpotensi rugi. Tetap simpan?"))return;if(id){const p=data.find(x=>Number(x.id)===Number(id));if(!p)return;if(cart.some(x=>Number(x.id)===Number(id)&&x.quantity>stock)){alert("Stok baru lebih kecil dari quantity barang di keranjang. Kurangi quantity keranjang terlebih dahulu.");return;}p.name=name;p.category=cat;p.purchasePrice=purchasePrice;p.sellingPrice=sellingPrice;p.price=sellingPrice;p.stock=stock;if(selectedImageData)p.image=selectedImageData;}else{data.push({id:Date.now(),name,category:cat,purchasePrice,sellingPrice,price:sellingPrice,stock,image:selectedImageData||"https://placehold.co/400x300?text=Produk"});}try{saveProducts();}catch(err){if(id){alert("Perubahan gagal disimpan. Kapasitas penyimpanan mungkin penuh.");}else{data.pop();alert("Barang gagal disimpan. Coba gunakan gambar yang lebih kecil.");}return;}resetProductForm();category="Semua";showCategories();showProducts();showManageProducts();updateCart();alert(id?"Data barang berhasil diperbarui.":"Barang berhasil ditambahkan.");});
 
+function showAppView(view){
+  const sections={dashboard:document.getElementById("dashboardSection"),kasir:document.getElementById("kasirSection"),input:document.getElementById("adminSection"),reports:document.getElementById("reportsSection")};
+  Object.entries(sections).forEach(([key,section])=>section.classList.toggle("hidden",key!==view));
+  if(view==="input")showManageProducts();
+  if(view==="reports")renderReports();
+  if(view==="kasir")updateCart();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll("[data-view]").forEach(link=>link.addEventListener("click",function(event){event.preventDefault();showAppView(this.dataset.view);}));
 document.getElementById("search").addEventListener("input",showProducts);
-renderStoreIdentity();showCategories();showProducts();updateCart();renderReports();showLoginState();
+renderStoreIdentity();showCategories();showProducts();updateCart();renderReports();showLoginState();showAppView("dashboard");
 </script>
 </body>
 </html>
