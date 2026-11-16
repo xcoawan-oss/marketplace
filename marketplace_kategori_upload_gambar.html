@@ -1,70 +1,11 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Marketplace</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f5f6fa;color:#222}
-header{background:#087b55;color:white;padding:18px 5%;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-header h2{margin:0}
-.search{padding:12px;border:0;border-radius:8px;width:min(350px,100%)}
-.hero{margin:20px auto;padding:30px 5%;background:#d8f5e8;border-radius:14px;max-width:1200px}
-.hero h1{color:#087b55}
-.container{max-width:1200px;margin:auto;padding:15px}
-.categories{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
-.categories button{padding:10px 16px;border:0;border-radius:20px;background:white;cursor:pointer}
-.categories button.active{background:#087b55;color:white}
-.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px}
-.card,.panel{background:white;padding:14px;border-radius:12px;box-shadow:0 2px 8px #ddd}
-.card img{width:100%;height:160px;object-fit:cover;border-radius:8px}
-.card h3{font-size:16px}
-.price{color:#e45b24;font-weight:bold}
-button{cursor:pointer}
-.primary{padding:11px;background:#087b55;color:white;border:0;border-radius:7px}
-.danger{padding:8px 10px;background:#b42318;color:white;border:0;border-radius:7px}
-.card .primary{width:100%}
-.panel{margin-top:24px}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-input,select{padding:11px;border:1px solid #ccd2d8;border-radius:7px;width:100%}
-label{display:block;font-size:13px;font-weight:bold;margin-bottom:5px}
-.cart-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #eee}
-.cart-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-footer{text-align:center;padding:25px;background:#087b55;color:white;margin-top:35px}
-#receipt{display:none}
-@media print{
-  body *{visibility:hidden!important}
-  #receipt,#receipt *{visibility:visible!important}
-  #receipt{display:block!important;position:absolute;left:0;top:0;width:100%;padding:12px;color:#000;background:#fff;font-family:monospace}
-  #receipt h2,#receipt p{text-align:center}
-  #receipt table{width:100%;border-collapse:collapse}
-  #receipt th,#receipt td{padding:5px 2px;border-bottom:1px dashed #777;text-align:left}
-  #receipt .right{text-align:right}
-  @page{size:80mm auto;margin:5mm}
-}
-</style>
-</head>
-<body>
-<header>
-  <h2>MY MARKETPLACE</h2>
-  <input class="search" id="search" placeholder="Cari produk...">
-  <div>🛒 Keranjang: <b id="count">0</b></div>
-</header>
+from pathlib import Path
+import re
 
-<section class="hero">
-  <h1>Selamat Datang di Marketplace</h1>
-  <p>Temukan produk terbaik dengan harga menarik.</p>
-</section>
+src = Path("/mnt/data/marketplace_kategori_upload_gambar.html")
+html = src.read_text(encoding="utf-8")
 
-<main class="container">
-  <h2>Kategori Produk</h2>
-  <div class="categories" id="categories"></div>
-
-  <h2>Daftar Produk</h2>
-  <div class="products" id="products"></div>
-
-  <section class="panel">
+# Replace the current cart panel with a checkout/review and cash-payment panel.
+old_panel = '''  <section class="panel">
     <h2>Keranjang Belanja</h2>
     <div id="cartItems">Belum ada produk.</div>
     <h3 id="total">Total: Rp0</h3>
@@ -74,211 +15,171 @@ footer{text-align:center;padding:25px;background:#087b55;color:white;margin-top:
       <button class="danger" onclick="clearCart()">Kosongkan Keranjang</button>
     </div>
     <p><small>Tanggal dan waktu cetak struk akan tercantum otomatis pada struk.</small></p>
-  </section>
+  </section>'''
 
-  <section class="panel">
-    <h2>Input / Tambah Barang</h2>
-    <p>Masukkan nama barang, pilih kategori, isi harga, lalu upload gambar dari komputer atau HP (opsional).</p>
-    <form id="productForm">
-      <div class="form-grid">
-        <div><label for="productName">Nama barang</label><input id="productName" required placeholder="Contoh: Keripik Kentang"></div>
-        <div>
-          <label for="productCategory">Kategori</label>
-          <select id="productCategory" required>
-            <option value="">-- Pilih kategori --</option>
-            <option value="Makanan & Minuman">Makanan & Minuman</option>
-            <option value="Elektronik">Elektronik</option>
-            <option value="Fashion">Fashion</option>
-            <option value="Rumah Tangga">Rumah Tangga</option>
-            <option value="Kesehatan & Kecantikan">Kesehatan & Kecantikan</option>
-            <option value="Otomotif">Otomotif</option>
-            <option value="Perlengkapan Industri">Perlengkapan Industri</option>
-            <option value="Lainnya">Lainnya</option>
-          </select>
-        </div>
-        <div><label for="productPrice">Harga (Rp)</label><input id="productPrice" type="number" min="1" step="1" required placeholder="Contoh: 15000"></div>
-        <div>
-          <label for="productImage">Upload gambar dari perangkat</label>
-          <input id="productImage" type="file" accept="image/*">
-          <small>Format gambar: JPG, PNG, atau WEBP. Gambar akan disimpan di browser ini.</small>
-          <img id="imagePreview" alt="Preview gambar produk" style="display:none;max-width:130px;max-height:110px;object-fit:contain;margin-top:8px;border-radius:8px">
-        </div>
+new_panel = '''  <section class="panel">
+    <h2>Cek Pesanan & Pembayaran</h2>
+    <p>Periksa barang dan total belanja sebelum menerima pembayaran.</p>
+    <div id="cartItems">Belum ada produk.</div>
+    <h3 id="total">Total: Rp0</h3>
+    <div class="form-grid" style="margin-top:16px">
+      <div>
+        <label for="cashPaid">Uang Dibayarkan / Diterima (Rp)</label>
+        <input id="cashPaid" type="number" min="0" step="1" inputmode="numeric" placeholder="Masukkan jumlah uang">
       </div>
-      <p><button class="primary" type="submit">Simpan Barang</button></p>
-    </form>
-    <h3>Daftar Barang Tersimpan</h3>
-    <div id="manageProducts"></div>
-    <p><small>Data barang disimpan di browser/perangkat ini. Untuk berbagi data antarperangkat atau pengguna, perlu database dan backend.</small></p>
-  </section>
-</main>
+      <div>
+        <label>Kembalian</label>
+        <div id="changeDue" class="panel" style="margin:0;padding:11px;color:#087b55;font-weight:bold">Rp0</div>
+      </div>
+    </div>
+    <p id="paymentMessage" aria-live="polite"><small>Masukkan jumlah uang untuk menghitung kembalian.</small></p>
+    <div class="cart-actions">
+      <button class="primary" onclick="calculateChange()">Hitung Kembalian</button>
+      <button class="primary" onclick="checkout()">Pesan melalui WhatsApp</button>
+      <button class="primary" onclick="printReceipt()">Print Struk</button>
+      <button class="danger" onclick="clearCart()">Kosongkan Keranjang</button>
+    </div>
+    <p><small>Tanggal dan waktu cetak struk akan tercantum otomatis pada struk.</small></p>
+  </section>'''
 
-<footer>© 2026 My Marketplace</footer>
+if old_panel not in html:
+    raise ValueError("Bagian keranjang pada file sumber tidak ditemukan.")
+html = html.replace(old_panel, new_panel)
 
-<section id="receipt" aria-hidden="true"></section>
+# Add simple table/payment styles.
+html = html.replace(
+'''.cart-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+footer''',
+'''.cart-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.order-table{width:100%;border-collapse:collapse;margin-top:8px}
+.order-table th,.order-table td{padding:9px 6px;border-bottom:1px solid #eee;text-align:left}
+.order-table th:last-child,.order-table td:last-child{text-align:right}
+.payment-ok{color:#087b55;font-weight:bold}
+.payment-short{color:#b42318;font-weight:bold}
+footer'''
+)
 
-<script>
-const whatsapp = "6281234567890"; // Ganti dengan nomor WhatsApp toko
-
-const defaultProducts = [
- {id:1,name:"Produk A",category:"Elektronik",price:250000,image:"https://placehold.co/400x300?text=Produk+A"},
- {id:2,name:"Produk B",category:"Fashion",price:150000,image:"https://placehold.co/400x300?text=Produk+B"},
- {id:3,name:"Produk C",category:"Elektronik",price:350000,image:"https://placehold.co/400x300?text=Produk+C"},
- {id:4,name:"Produk D",category:"Rumah Tangga",price:100000,image:"https://placehold.co/400x300?text=Produk+D"}
-];
-
-let data = loadProducts();
-let cart = [];
-let category = "Semua";
-
-function loadProducts(){
-  try {
-    const saved = localStorage.getItem("marketplaceProducts");
-    return saved ? JSON.parse(saved) : defaultProducts;
-  } catch(e) { return defaultProducts; }
-}
-function saveProducts(){
-  localStorage.setItem("marketplaceProducts", JSON.stringify(data));
-}
-const rupiah = n => "Rp"+Number(n).toLocaleString("id-ID");
-const escapeHTML = value => String(value).replace(/[&<>"']/g, ch => ({
-  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-}[ch]));
-
-function showCategories(){
-  const cats=["Semua",...new Set(data.map(p=>p.category))];
-  document.getElementById("categories").innerHTML=cats.map(c=>
-    `<button class="${category===c?'active':''}" onclick="setCategory('${escapeHTML(c).replace(/'/g,"&#39;")}')">${escapeHTML(c)}</button>`
-  ).join("");
-}
-function setCategory(c){ category=c; showCategories(); showProducts(); }
-
-function showProducts(){
-  const q=document.getElementById("search").value.toLowerCase();
-  const filtered=data.filter(p=>
-    (category==="Semua"||p.category===category) && p.name.toLowerCase().includes(q)
-  );
-  document.getElementById("products").innerHTML=filtered.map(p=>`
-    <div class="card">
-      <img src="${escapeHTML(p.image || 'https://placehold.co/400x300?text=Produk')}" alt="${escapeHTML(p.name)}" onerror="this.src='https://placehold.co/400x300?text=Produk'">
-      <h3>${escapeHTML(p.name)}</h3>
-      <p>${escapeHTML(p.category)}</p>
-      <p class="price">${rupiah(p.price)}</p>
-      <button class="primary" onclick="addCart(${Number(p.id)})">Tambah ke Keranjang</button>
-    </div>`).join("") || "Produk tidak ditemukan.";
-}
-function addCart(id){
-  const product=data.find(p=>p.id===id);
-  if(product){cart.push({...product});updateCart();}
-}
-function updateCart(){
+# Replace updateCart with a table-based order review and refresh payment calculation.
+old_update = '''function updateCart(){
   document.getElementById("count").textContent=cart.length;
   document.getElementById("cartItems").innerHTML=cart.length?
     cart.map((p,i)=>`<div class="cart-row"><span>${escapeHTML(p.name)} — ${rupiah(p.price)}</span><button class="danger" onclick="removeCart(${i})">Hapus</button></div>`).join("") :
     "Belum ada produk.";
   document.getElementById("total").textContent="Total: "+rupiah(cart.reduce((s,p)=>s+p.price,0));
+}'''
+new_update = '''function getOrderTotal(){
+  return cart.reduce((sum, product) => sum + Number(product.price || 0), 0);
 }
-function removeCart(i){cart.splice(i,1);updateCart();}
-function clearCart(){cart=[];updateCart();}
-function checkout(){
-  if(!cart.length){alert("Keranjang masih kosong");return;}
-  const items=cart.map(p=>p.name+" - "+rupiah(p.price)).join("\n");
-  const total=cart.reduce((s,p)=>s+p.price,0);
-  const message=`Halo, saya ingin memesan:\n${items}\nTotal: ${rupiah(total)}`;
-  window.open("https://wa.me/"+whatsapp+"?text="+encodeURIComponent(message),"_blank");
+function updateCart(){
+  document.getElementById("count").textContent=cart.length;
+  document.getElementById("cartItems").innerHTML=cart.length?`
+    <table class="order-table">
+      <thead><tr><th>No.</th><th>Nama Barang</th><th>Harga</th><th>Aksi</th></tr></thead>
+      <tbody>${cart.map((p,i)=>`
+        <tr>
+          <td>${i+1}</td>
+          <td>${escapeHTML(p.name)}</td>
+          <td>${rupiah(p.price)}</td>
+          <td><button class="danger" onclick="removeCart(${i})">Hapus</button></td>
+        </tr>`).join("")}</tbody>
+    </table>` : "Belum ada produk.";
+  document.getElementById("total").textContent="Total: "+rupiah(getOrderTotal());
+  calculateChange();
 }
-function printReceipt(){
+function calculateChange(){
+  const paidInput=document.getElementById("cashPaid");
+  const changeBox=document.getElementById("changeDue");
+  const message=document.getElementById("paymentMessage");
+  const total=getOrderTotal();
+  const raw=paidInput.value;
+  const paid=raw==="" ? 0 : Number(raw);
+
+  if(!cart.length){
+    changeBox.textContent="Rp0";
+    message.innerHTML="<small>Tambahkan barang ke keranjang terlebih dahulu.</small>";
+    return 0;
+  }
+  if(raw==="" || !Number.isFinite(paid)){
+    changeBox.textContent="Rp0";
+    message.innerHTML="<small>Masukkan jumlah uang untuk menghitung kembalian.</small>";
+    return 0;
+  }
+  if(paid<total){
+    const shortage=total-paid;
+    changeBox.textContent="Kurang "+rupiah(shortage);
+    message.innerHTML=`<span class="payment-short">Uang masih kurang ${rupiah(shortage)}.</span>`;
+    return 0;
+  }
+  const change=paid-total;
+  changeBox.textContent=rupiah(change);
+  message.innerHTML=`<span class="payment-ok">Pembayaran cukup. Kembalian: ${rupiah(change)}.</span>`;
+  return change;
+}'''
+if old_update not in html:
+    raise ValueError("Fungsi updateCart pada file sumber tidak ditemukan.")
+html = html.replace(old_update, new_update)
+
+# Add input listener for live calculation after search listener.
+html = html.replace(
+'''document.getElementById("search").addEventListener("input",showProducts);
+showCategories();''',
+'''document.getElementById("search").addEventListener("input",showProducts);
+document.getElementById("cashPaid").addEventListener("input",calculateChange);
+showCategories();'''
+)
+
+# Replace printReceipt function to include paid amount and change, and ensure sufficient payment.
+start = html.index('function printReceipt(){')
+end = html.index('\\ndocument.getElementById("productImage")', start) if '\\ndocument.getElementById("productImage")' in html[start:] else -1
+# Existing uploaded source contains image preview listener before form submit, so printReceipt ends before that.
+if end == -1:
+    # Fallback to the next form submit binding.
+    end = html.index('\\nlet selectedImageData', start)
+
+new_print = r'''function printReceipt(){
   if(!cart.length){alert("Keranjang masih kosong");return;}
+  const paidInput=document.getElementById("cashPaid");
+  const paid=paidInput.value==="" ? 0 : Number(paidInput.value);
+  const total=getOrderTotal();
+  if(!Number.isFinite(paid) || paid<total){
+    alert("Uang yang dibayarkan belum cukup. Masukkan jumlah uang minimal "+rupiah(total)+".");
+    paidInput.focus();
+    return;
+  }
+  const change=paid-total;
   const now=new Date();
   const dateText=now.toLocaleDateString("id-ID",{day:"2-digit",month:"long",year:"numeric"});
   const timeText=now.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
-  const total=cart.reduce((s,p)=>s+p.price,0);
+  const orderNumber="INV-"+now.getFullYear()+String(now.getMonth()+1).padStart(2,"0")+String(now.getDate()).padStart(2,"0")+"-"+String(now.getHours()).padStart(2,"0")+String(now.getMinutes()).padStart(2,"0")+String(now.getSeconds()).padStart(2,"0");
   const rows=cart.map((p,i)=>`<tr><td>${i+1}. ${escapeHTML(p.name)}</td><td class="right">${rupiah(p.price)}</td></tr>`).join("");
   const receipt=document.getElementById("receipt");
   receipt.innerHTML=`
     <h2>MY MARKETPLACE</h2>
     <p>STRUK PEMBELIAN</p>
-    <p>Tanggal: ${dateText}<br>Waktu cetak: ${timeText}</p>
+    <p>No. Pesanan: ${orderNumber}<br>Tanggal: ${dateText}<br>Waktu cetak: ${timeText}</p>
     <hr>
     <table><tbody>${rows}</tbody></table>
     <hr>
-    <table><tr><th>TOTAL</th><th class="right">${rupiah(total)}</th></tr></table>
+    <table>
+      <tr><th>TOTAL BELANJA</th><th class="right">${rupiah(total)}</th></tr>
+      <tr><td>UANG DIBAYARKAN</td><td class="right">${rupiah(paid)}</td></tr>
+      <tr><th>KEMBALIAN</th><th class="right">${rupiah(change)}</th></tr>
+    </table>
     <p>Terima kasih atas pembelian Anda.</p>`;
   window.print();
-}
+}'''
+html = html[:start] + new_print + html[end:]
 
-let selectedImageData = "";
-const imageInput = document.getElementById("productImage");
-imageInput.addEventListener("change", function(){
-  const file = this.files && this.files[0];
-  const preview = document.getElementById("imagePreview");
-  selectedImageData = "";
-  if(!file){ preview.style.display="none"; preview.src=""; return; }
-  if(!file.type.startsWith("image/")){
-    alert("File harus berupa gambar.");
-    this.value="";
-    preview.style.display="none";
-    return;
-  }
-  // Compress image before saving so browser storage is less likely to fill up.
-  const reader = new FileReader();
-  reader.onload = function(event){
-    const img = new Image();
-    img.onload = function(){
-      const maxSide = 900;
-      const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(img.width * scale));
-      canvas.height = Math.max(1, Math.round(img.height * scale));
-      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-      selectedImageData = canvas.toDataURL("image/jpeg", 0.78);
-      preview.src = selectedImageData;
-      preview.style.display = "block";
-    };
-    img.onerror = function(){ alert("Gambar tidak dapat dibaca."); };
-    img.src = event.target.result;
-  };
-  reader.readAsDataURL(file);
-});
+# Clear payment entry when cart is cleared.
+html = html.replace(
+'''function clearCart(){cart=[];updateCart();}''',
+'''function clearCart(){
+  cart=[];
+  document.getElementById("cashPaid").value="";
+  updateCart();
+}'''
+)
 
-document.getElementById("productForm").addEventListener("submit",function(e){
-  e.preventDefault();
-  const name=document.getElementById("productName").value.trim();
-  const cat=document.getElementById("productCategory").value;
-  const price=Number(document.getElementById("productPrice").value);
-  const image=selectedImageData || "https://placehold.co/400x300?text=Produk";
-  if(!name || !cat || !Number.isFinite(price) || price<=0){
-    alert("Mohon isi nama, pilih kategori, dan masukkan harga dengan benar.");
-    return;
-  }
-  data.push({id:Date.now(),name,category:cat,price,image});
-  try {
-    saveProducts();
-  } catch(err) {
-    data.pop();
-    alert("Penyimpanan gagal. Kapasitas penyimpanan browser mungkin penuh. Coba gunakan gambar yang lebih kecil.");
-    return;
-  }
-  this.reset();
-  selectedImageData="";
-  document.getElementById("imagePreview").style.display="none";
-  document.getElementById("imagePreview").src="";
-  category="Semua";
-  showCategories();showProducts();showManageProducts();
-  alert("Barang berhasil disimpan.");
-});
-function showManageProducts(){
-  document.getElementById("manageProducts").innerHTML=data.length?
-    data.map(p=>`<div class="cart-row"><span>${escapeHTML(p.name)} — ${rupiah(p.price)}</span><button class="danger" onclick="deleteProduct(${Number(p.id)})">Hapus barang</button></div>`).join("") :
-    "Belum ada barang.";
-}
-function deleteProduct(id){
-  if(!confirm("Hapus barang ini dari katalog?"))return;
-  data=data.filter(p=>p.id!==id);
-  saveProducts();
-  showCategories();showProducts();showManageProducts();
-}
-document.getElementById("search").addEventListener("input",showProducts);
-showCategories();showProducts();showManageProducts();updateCart();
-</script>
-</body>
-</html>
+out = Path("/mnt/data/marketplace_cek_pesanan_pembayaran_kembalian.html")
+out.write_text(html, encoding="utf-8")
+print(f"File terbaru berhasil dibuat: {out}")
