@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Marketplace</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f6fa;color:#222}
+header{background:#087b55;color:white;padding:18px 5%;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+header h2{margin:0}
+.search{padding:12px;border:0;border-radius:8px;width:min(350px,100%)}
+.hero{margin:20px auto;padding:30px 5%;background:#d8f5e8;border-radius:14px;max-width:1200px}
+.hero h1{color:#087b55}
+.dashboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin:20px 0}
+.dashboard-card{background:#fff;border-radius:12px;padding:18px;box-shadow:0 2px 8px #ddd;border-left:4px solid #087b55}
+.dashboard-card .dashboard-label{font-size:13px;color:#667085;margin-bottom:8px}
+.dashboard-card .dashboard-value{font-size:24px;font-weight:bold;color:#087b55;overflow-wrap:anywhere}
+.dashboard-note{font-size:12px;color:#667085;margin:8px 2px 0}
+.container{max-width:1200px;margin:auto;padding:15px}
+.categories{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
+.categories button{padding:10px 16px;border:0;border-radius:20px;background:white;cursor:pointer}
+.categories button.active{background:#087b55;color:white}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px}
+.card,.panel{background:white;padding:14px;border-radius:12px;box-shadow:0 2px 8px #ddd}
+.card img{width:100%;height:160px;object-fit:cover;border-radius:8px}
+.card h3{font-size:16px}
+.price{color:#e45b24;font-weight:bold}
+button{cursor:pointer}
+.primary{padding:11px;background:#087b55;color:white;border:0;border-radius:7px}
+.danger{padding:8px 10px;background:#b42318;color:white;border:0;border-radius:7px}
+.card .primary{width:100%}
+.purchase-controls{display:grid;grid-template-columns:90px 1fr;gap:8px;align-items:end;margin-top:12px}
+.buy-qty{width:100%;text-align:center}
+.qty-control{display:flex;align-items:center;gap:6px}
+.qty-control button{border:0;border-radius:6px;background:#e8f3ee;color:#087b55;font-weight:bold;width:30px;height:32px}
+.qty-input{width:58px;padding:7px;text-align:center}
+.cart-detail{display:flex;flex-direction:column;gap:5px;flex:1}
+.cart-subtotal{font-weight:bold;color:#087b55}
+.panel{margin-top:24px}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+input,select{padding:11px;border:1px solid #ccd2d8;border-radius:7px;width:100%}
+label{display:block;font-size:13px;font-weight:bold;margin-bottom:5px}
+.cart-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid #eee}
+.cart-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+footer{text-align:center;padding:25px;background:#087b55;color:white;margin-top:35px}
+#receipt{display:none}
+@media print{
+  body *{visibility:hidden!important}
+  #receipt,#receipt *{visibility:visible!important}
+  #receipt{display:block!important;position:absolute;left:0;top:0;width:100%;padding:12px;color:#000;background:#fff;font-family:monospace}
+  #receipt h2,#receipt p{text-align:center}
+  #receipt table{width:100%;border-collapse:collapse}
+  #receipt th,#receipt td{padding:5px 2px;border-bottom:1px dashed #777;text-align:left}
+  #receipt .right{text-align:right}
+  @page{size:80mm auto;margin:5mm}
+}
+</style>
+</head>
+<body>
+<header>
+  <h2>MY MARKETPLACE</h2>
+  <input class="search" id="search" placeholder="Cari produk...">
+  <div>🛒 Keranjang: <b id="count">0</b></div>
+</header>
+
+<section class="hero">
+  <h1>Selamat Datang di Marketplace</h1>
+  <p>Temukan produk terbaik dengan harga menarik.</p>
+</section>
+
+<main class="container">
+  <section class="panel" aria-label="Ringkasan dashboard">
+    <h2>Dashboard Marketplace</h2>
+    <div class="dashboard-grid">
+      <div class="dashboard-card">
+        <div class="dashboard-label">Barang tersedia</div>
+        <div class="dashboard-value" id="dashboardProducts">0</div>
+      </div>
+      <div class="dashboard-card">
+        <div class="dashboard-label">Jenis barang di keranjang</div>
+        <div class="dashboard-value" id="dashboardLines">0</div>
+      </div>
+      <div class="dashboard-card">
+        <div class="dashboard-label">Total quantity di keranjang</div>
+        <div class="dashboard-value" id="dashboardQty">0</div>
+      </div>
+      <div class="dashboard-card">
+        <div class="dashboard-label">Nilai belanja saat ini</div>
+        <div class="dashboard-value" id="dashboardValue">Rp0</div>
+      </div>
+    </div>
+    <p class="dashboard-note">Ringkasan diperbarui otomatis berdasarkan katalog dan keranjang aktif. Nilai belanja ini belum merupakan riwayat transaksi yang sudah selesai.</p>
+  </section>
+  <h2>Kategori Produk</h2>
+  <div class="categories" id="categories"></div>
+
+  <h2>Daftar Produk</h2>
+  <div class="products" id="products"></div>
+
+  <section class="panel">
+    <h2>Keranjang Belanja</h2>
+    <div id="cartItems">Belum ada produk.</div>
+    <h3 id="total">Total: Rp0</h3>
+    <div class="cart-actions">
+      <button class="primary" onclick="checkout()">Pesan melalui WhatsApp</button>
+      <button class="primary" onclick="printReceipt()">Print Struk</button>
+      <button class="danger" onclick="clearCart()">Kosongkan Keranjang</button>
+    </div>
+    <p><small>Tanggal dan waktu cetak struk akan tercantum otomatis pada struk.</small></p>
+  </section>
+
+  <section class="panel">
+    <h2>Input / Tambah Barang</h2>
+    <p>Masukkan nama barang, pilih kategori, isi harga, lalu upload gambar dari komputer atau HP (opsional).</p>
+    <form id="productForm">
+      <div class="form-grid">
+        <div><label for="productName">Nama barang</label><input id="productName" required placeholder="Contoh: Keripik Kentang"></div>
+        <div>
+          <label for="productCategory">Kategori</label>
+          <select id="productCategory" required>
+            <option value="">-- Pilih kategori --</option>
+            <option value="Makanan & Minuman">Makanan & Minuman</option>
+            <option value="Elektronik">Elektronik</option>
+            <option value="Fashion">Fashion</option>
+            <option value="Rumah Tangga">Rumah Tangga</option>
+            <option value="Kesehatan & Kecantikan">Kesehatan & Kecantikan</option>
+            <option value="Otomotif">Otomotif</option>
+            <option value="Perlengkapan Industri">Perlengkapan Industri</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+        <div><label for="productPrice">Harga (Rp)</label><input id="productPrice" type="number" min="1" step="1" required placeholder="Contoh: 15000"></div>
+        <div>
+          <label for="productImage">Upload gambar dari perangkat</label>
+          <input id="productImage" type="file" accept="image/*">
+          <small>Format gambar: JPG, PNG, atau WEBP. Gambar akan disimpan di browser ini.</small>
+          <img id="imagePreview" alt="Preview gambar produk" style="display:none;max-width:130px;max-height:110px;object-fit:contain;margin-top:8px;border-radius:8px">
+        </div>
+      </div>
+      <p><button class="primary" type="submit">Simpan Barang</button></p>
+    </form>
+    <h3>Daftar Barang Tersimpan</h3>
+    <div id="manageProducts"></div>
+    <p><small>Data barang disimpan di browser/perangkat ini. Untuk berbagi data antarperangkat atau pengguna, perlu database dan backend.</small></p>
+  </section>
+</main>
+
+<footer>© 2026 My Marketplace</footer>
+
+<section id="receipt" aria-hidden="true"></section>
+
+<script>
+const whatsapp = "6281234567890"; // Ganti dengan nomor WhatsApp toko
+
+const defaultProducts = [
+ {id:1,name:"Produk A",category:"Elektronik",price:250000,image:"https://placehold.co/400x300?text=Produk+A"},
+ {id:2,name:"Produk B",category:"Fashion",price:150000,image:"https://placehold.co/400x300?text=Produk+B"},
+ {id:3,name:"Produk C",category:"Elektronik",price:350000,image:"https://placehold.co/400x300?text=Produk+C"},
+ {id:4,name:"Produk D",category:"Rumah Tangga",price:100000,image:"https://placehold.co/400x300?text=Produk+D"}
+];
+
+let data = loadProducts();
+let cart = [];
+let category = "Semua";
+
+function loadProducts(){
+  try {
+    const saved = localStorage.getItem("marketplaceProducts");
+    return saved ? JSON.parse(saved) : defaultProducts;
+  } catch(e) { return defaultProducts; }
+}
+function saveProducts(){
+  localStorage.setItem("marketplaceProducts", JSON.stringify(data));
+}
+const rupiah = n => "Rp"+Number(n).toLocaleString("id-ID");
+const escapeHTML = value => String(value).replace(/[&<>"']/g, ch => ({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+}[ch]));
+
+function showCategories(){
+  const cats=["Semua",...new Set(data.map(p=>p.category))];
+  document.getElementById("categories").innerHTML=cats.map(c=>
+    `<button class="${category===c?'active':''}" onclick="setCategory('${escapeHTML(c).replace(/'/g,"&#39;")}')">${escapeHTML(c)}</button>`
+  ).join("");
+}
+function setCategory(c){ category=c; showCategories(); showProducts(); }
+
+function showProducts(){
+  const q=document.getElementById("search").value.toLowerCase();
+  const filtered=data.filter(p=>
+    (category==="Semua"||p.category===category) && p.name.toLowerCase().includes(q)
+  );
+  document.getElementById("products").innerHTML=filtered.map(p=>`
+    <div class="card">
+      <img src="${escapeHTML(p.image || 'https://placehold.co/400x300?text=Produk')}" alt="${escapeHTML(p.name)}" onerror="this.src='https://placehold.co/400x300?text=Produk'">
+      <h3>${escapeHTML(p.name)}</h3>
+      <p>${escapeHTML(p.category)}</p>
+      <p class="price">${rupiah(p.price)}</p>
+      <div class="purchase-controls">
+        <div><label for="buyQty-${Number(p.id)}">Quantity</label><input class="buy-qty" id="buyQty-${Number(p.id)}" type="number" min="1" step="1" value="1"></div>
+        <button class="primary" onclick="addCart(${Number(p.id)}, document.getElementById('buyQty-${Number(p.id)}').value)">Tambah ke Keranjang</button>
+      </div>
+    </div>`).join("") || "Produk tidak ditemukan.";
+}
+function addCart(id, quantity){
+  const product=data.find(p=>Number(p.id)===Number(id));
+  const qty=Math.max(1, Math.floor(Number(quantity)||1));
+  if(!product) return;
+  const existing=cart.find(p=>Number(p.id)===Number(id));
+  if(existing){existing.quantity+=qty;}
+  else{cart.push({...product,quantity:qty});}
+  updateCart();
+}
+function updateCart(){
+  const totalQty=cart.reduce((sum,p)=>sum+p.quantity,0);
+  const total=cart.reduce((sum,p)=>sum+(p.price*p.quantity),0);
+  document.getElementById("count").textContent=totalQty;
+  document.getElementById("cartItems").innerHTML=cart.length?
+    cart.map((p,i)=>`<div class="cart-row">
+      <div class="cart-detail">
+        <strong>${escapeHTML(p.name)}</strong>
+        <small>${rupiah(p.price)} / item</small>
+        <div class="qty-control">
+          <button type="button" aria-label="Kurangi quantity" onclick="changeCartQty(${i},-1)">−</button>
+          <input class="qty-input" type="number" min="1" step="1" value="${p.quantity}" aria-label="Quantity ${escapeHTML(p.name)}" onchange="setCartQty(${i},this.value)">
+          <button type="button" aria-label="Tambah quantity" onclick="changeCartQty(${i},1)">+</button>
+        </div>
+        <span class="cart-subtotal">Subtotal: ${rupiah(p.price*p.quantity)}</span>
+      </div>
+      <button class="danger" onclick="removeCart(${i})">Hapus</button>
+    </div>`).join("") :
+    "Belum ada produk.";
+  document.getElementById("total").textContent="Total: "+rupiah(total);
+  updateDashboard();
+}
+function updateDashboard(){
+  const productCount=data.length;
+  const cartTypes=cart.length;
+  const totalQty=cart.reduce((sum,p)=>sum+(Number(p.quantity)||0),0);
+  const cartValue=cart.reduce((sum,p)=>sum+(Number(p.price)||0)*(Number(p.quantity)||0),0);
+
+  document.getElementById("dashboardProducts").textContent=productCount;
+  document.getElementById("dashboardLines").textContent=cartTypes;
+  document.getElementById("dashboardQty").textContent=totalQty;
+  document.getElementById("dashboardValue").textContent=rupiah(cartValue);
+}
+
+function changeCartQty(i,delta){
+  if(!cart[i])return;
+  cart[i].quantity=Math.max(1,cart[i].quantity+delta);
+  updateCart();
+}
+function setCartQty(i,value){
+  if(!cart[i])return;
+  const qty=Math.floor(Number(value));
+  if(!Number.isFinite(qty)||qty<1){
+    alert("Quantity minimal 1.");
+    updateCart();
+    return;
+  }
+  cart[i].quantity=qty;
+  updateCart();
+}
+function removeCart(i){cart.splice(i,1);updateCart();}
+function clearCart(){cart=[];updateCart();}
+function checkout(){
+  if(!cart.length){alert("Keranjang masih kosong");return;}
+  const items=cart.map(p=>`${p.name} | ${p.quantity} x ${rupiah(p.price)} = ${rupiah(p.price*p.quantity)}`).join("\n");
+  const total=cart.reduce((s,p)=>s+(p.price*p.quantity),0);
+  const totalQty=cart.reduce((s,p)=>s+p.quantity,0);
+  const message=`Halo, saya ingin memesan:\n${items}\nTotal quantity: ${totalQty}\nTotal: ${rupiah(total)}`;
+  window.open("https://wa.me/"+whatsapp+"?text="+encodeURIComponent(message),"_blank");
+}
+function printReceipt(){
+  if(!cart.length){alert("Keranjang masih kosong");return;}
+  const now=new Date();
+  const dateText=now.toLocaleDateString("id-ID",{day:"2-digit",month:"long",year:"numeric"});
+  const timeText=now.toLocaleTimeString("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  const total=cart.reduce((s,p)=>s+(p.price*p.quantity),0);
+  const totalQty=cart.reduce((s,p)=>s+p.quantity,0);
+  const rows=cart.map((p,i)=>`<tr><td colspan="4">${i+1}. ${escapeHTML(p.name)}</td></tr><tr><td>${p.quantity}</td><td>${rupiah(p.price)}</td><td class="right" colspan="2">${rupiah(p.price*p.quantity)}</td></tr>`).join("");
+  const receipt=document.getElementById("receipt");
+  receipt.innerHTML=`
+    <h2>MY MARKETPLACE</h2>
+    <p>STRUK PEMBELIAN</p>
+    <p>Tanggal: ${dateText}<br>Waktu cetak: ${timeText}</p>
+    <hr>
+    <table><thead><tr><th>Qty</th><th>Harga</th><th class="right" colspan="2">Subtotal</th></tr></thead><tbody>${rows}</tbody></table>
+    <hr>
+    <p>Total quantity: ${totalQty}</p>
+    <table><tr><th>TOTAL</th><th class="right">${rupiah(total)}</th></tr></table>
+    <p>Terima kasih atas pembelian Anda.</p>`;
+  window.print();
+}
+
+let selectedImageData = "";
+const imageInput = document.getElementById("productImage");
+imageInput.addEventListener("change", function(){
+  const file = this.files && this.files[0];
+  const preview = document.getElementById("imagePreview");
+  selectedImageData = "";
+  if(!file){ preview.style.display="none"; preview.src=""; return; }
+  if(!file.type.startsWith("image/")){
+    alert("File harus berupa gambar.");
+    this.value="";
+    preview.style.display="none";
+    return;
+  }
+  // Compress image before saving so browser storage is less likely to fill up.
+  const reader = new FileReader();
+  reader.onload = function(event){
+    const img = new Image();
+    img.onload = function(){
+      const maxSide = 900;
+      const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.width * scale));
+      canvas.height = Math.max(1, Math.round(img.height * scale));
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      selectedImageData = canvas.toDataURL("image/jpeg", 0.78);
+      preview.src = selectedImageData;
+      preview.style.display = "block";
+    };
+    img.onerror = function(){ alert("Gambar tidak dapat dibaca."); };
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+document.getElementById("productForm").addEventListener("submit",function(e){
+  e.preventDefault();
+  const name=document.getElementById("productName").value.trim();
+  const cat=document.getElementById("productCategory").value;
+  const price=Number(document.getElementById("productPrice").value);
+  const image=selectedImageData || "https://placehold.co/400x300?text=Produk";
+  if(!name || !cat || !Number.isFinite(price) || price<=0){
+    alert("Mohon isi nama, pilih kategori, dan masukkan harga dengan benar.");
+    return;
+  }
+  data.push({id:Date.now(),name,category:cat,price,image});
+  try {
+    saveProducts();
+  } catch(err) {
+    data.pop();
+    alert("Penyimpanan gagal. Kapasitas penyimpanan browser mungkin penuh. Coba gunakan gambar yang lebih kecil.");
+    return;
+  }
+  this.reset();
+  selectedImageData="";
+  document.getElementById("imagePreview").style.display="none";
+  document.getElementById("imagePreview").src="";
+  category="Semua";
+  showCategories();showProducts();showManageProducts();
+  alert("Barang berhasil disimpan.");
+});
+function showManageProducts(){
+  document.getElementById("manageProducts").innerHTML=data.length?
+    data.map(p=>`<div class="cart-row"><span>${escapeHTML(p.name)} — ${rupiah(p.price)}</span><button class="danger" onclick="deleteProduct(${Number(p.id)})">Hapus barang</button></div>`).join("") :
+    "Belum ada barang.";
+  updateDashboard();
+}
+function deleteProduct(id){
+  if(!confirm("Hapus barang ini dari katalog?"))return;
+  data=data.filter(p=>p.id!==id);
+  saveProducts();
+  showCategories();showProducts();showManageProducts();
+}
+document.getElementById("search").addEventListener("input",showProducts);
+showCategories();showProducts();showManageProducts();updateCart();
+</script>
+</body>
+</html>
