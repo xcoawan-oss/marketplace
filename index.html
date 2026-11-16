@@ -65,7 +65,6 @@ input,select{padding:11px;border:1px solid #ccd2d8;border-radius:7px;width:100%;
     <h3 id="total">Total: Rp0</h3>
     <div class="cart-actions">
       <button class="primary" onclick="checkoutWhatsApp()">Pesan melalui WhatsApp</button>
-      <button class="secondary" onclick="printLastReceipt()">Cetak Struk Terakhir</button>
       <button class="danger" onclick="clearCart()">Kosongkan Keranjang</button>
     </div>
     <p class="note">Atur quantity, harga satuan, dan subtotal pada keranjang. Stok baru berkurang setelah pembayaran diselesaikan.</p>
@@ -80,7 +79,10 @@ input,select{padding:11px;border:1px solid #ccd2d8;border-radius:7px;width:100%;
         </div>
         <p><strong>Total belanja: <span id="paymentTotal">Rp0</span></strong></p>
         <p><strong>Kembalian: <span id="changeDue">Rp0</span></strong></p>
-        <div class="cart-actions"><button class="primary" id="completeSaleBtn" onclick="completeSale()">Selesaikan Pembayaran</button></div>
+        <div class="cart-actions">
+          <button class="primary" id="completeSaleBtn" onclick="completeSale()">Selesaikan Pembayaran</button>
+          <button class="secondary hidden" id="reprintReceiptBtn" type="button" onclick="printLastReceipt()">Cetak Ulang Struk Terakhir</button>
+        </div>
         <p class="note">Transaksi disimpan ke riwayat dan stok otomatis dikurangi setelah pembayaran cukup dan berhasil disimpan.</p>
       </div>
       <div class="subpanel"><h3>Ringkasan Pembayaran</h3><div id="paymentSummary" class="empty">Belum ada barang yang akan dibayar.</div></div>
@@ -263,9 +265,12 @@ function completeSale(){
   cart.forEach(item=>{const product=data.find(p=>Number(p.id)===Number(item.id));product.stock-=item.quantity;});
   transactions.push(transaction);
   try{saveProducts();saveTransactions();}catch(err){data=JSON.parse(oldData);transactions=JSON.parse(oldTransactions);try{saveProducts();saveTransactions();}catch(e){}alert("Transaksi gagal disimpan. Periksa kapasitas penyimpanan browser.");return;}
-  lastTransaction=transaction;cart=[];document.getElementById("cashReceived").value="";document.getElementById("saleNotice").textContent=`Pembayaran berhasil. Nomor transaksi: ${transaction.id}. Kembalian: ${rupiah(transaction.change)}.`;
+  lastTransaction=transaction;cart=[];document.getElementById("cashReceived").value="";
+  document.getElementById("saleNotice").textContent=`Pembayaran berhasil. Nomor transaksi: ${transaction.id}. Kembalian: ${rupiah(transaction.change)}. Struk siap dicetak.`;
+  document.getElementById("reprintReceiptBtn").classList.remove("hidden");
   updateCart();showManageProducts();renderReports();
-  alert(`Pembayaran berhasil!\nNomor: ${transaction.id}\nKembalian: ${rupiah(transaction.change)}\nSilakan cetak struk.`);
+  // Cetak struk otomatis setelah transaksi tersimpan; tombol cetak ulang tetap tersedia bila diperlukan.
+  printTransaction(transaction.id);
 }
 function printLastReceipt(){
   if(!lastTransaction){alert("Belum ada transaksi yang tersimpan. Selesaikan pembayaran terlebih dahulu.");return;}
